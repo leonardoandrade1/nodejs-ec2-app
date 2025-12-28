@@ -1,15 +1,20 @@
-import { createServer } from 'node:http';
+import express from 'express';
 
-const server = createServer((req, res) => {
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204); // No content needed for preflight success
-    res.end();
-    return;
-  }
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Hello World!\n');
+const app = express();
+
+app.use(express.json());
+
+const router = express.Router();
+
+router.get('/', (req, res) => {
+  res.send('Hello GET!\n');
+});
+router.post('/post', (req, res) => {
+  res.send('Hello POST!\n');
 });
 
-server.listen(3000, '0.0.0.0', () => {
-  console.log('Listening on 0.0.0.0:3000');
+app.use('/v1', router);
+
+app.listen(3000, () => {
+  console.log('Server is running on http://0.0.0.0:3000');
 });
