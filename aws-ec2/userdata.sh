@@ -13,8 +13,6 @@ source /root/.bashrc
 
 nvm install --lts
 
-NODE_PATH=$(which node)
-
 mkdir -p /var/www
 cd /var/www
 
@@ -30,8 +28,21 @@ npm run build --if-present
 chown -R root:nginx /var/www/app
 chmod -R 755 /var/www/app
 
-## Remove default server NGINX config. It will remove any existing server block in order to use custom config inherited from the repository
-sed -i '/server {/,/    }/d' /etc/nginx/nginx.conf
+## Remove all default NGINX files
+rm -f /etc/nginx/nginx.conf
+rm -f /etc/nginx/conf.d/*.conf
+rm -f /etc/nginx/default.d/
+
+## Configure a simlink for NGINX conf
+ln -sf /var/www/app/nginx/nginx.conf /etc/nginx/nginx.conf
+
+## Set proper permissions for NGINX logs
+touch /var/log/nginx/node_app_error.log /var/log/nginx/node_app_access.log
+chown nginx:nginx /var/log/nginx/node_app_*.log
+chown -R root:nginx /var/www/app
+chmod -R 755 /var/www/app
+## Allow NGINX make network connections for SELinux
+setsebool -P httpd_can_network_connect 1
 
 ## Configure NGINX
 if [ -f "/var/www/app/nginx/nginx.conf" ]; then
@@ -44,14 +55,12 @@ if [ -f "/var/www/app/nginx/nginx.conf" ]; then
     chown nginx:nginx /var/log/nginx/node_app_error.log
 fi
 
-## Allow NGINX make network connections for SELinux
-setsebool -P httpd_can_network_connect 1
-
 ## Restart NGINX to apply changes
 systemctl enable nginx
 systemctl start nginx
 
-## Creating a simple systemd service to run the NodeJS app (if applicable)
+## Creating a simple systemd service to run the NodeJS app
+NODE_PATH=$(which node)
 cat <<EOF > /etc/systemd/system/node-app.service
 [Unit]
 Description=Simple WebApp Node.js
