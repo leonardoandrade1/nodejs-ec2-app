@@ -12,6 +12,7 @@ source /root/.bashrc
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 nvm install --lts
+npm install pm2 -g
 
 mkdir -p /var/www
 cd /var/www
@@ -59,27 +60,9 @@ fi
 systemctl enable nginx
 systemctl start nginx
 
-## Creating a simple systemd service to run the NodeJS app
-NODE_PATH=$(which node)
-cat <<EOF > /etc/systemd/system/node-app.service
-[Unit]
-Description=Simple WebApp Node.js
-After=network.target
+## Start the NodeJS app with PM2
+pm2 start /var/www/app/server.mjs --name "nodejs-ec2-app"
 
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/var/www/app
-# Set entrypoint
-ExecStart=$NODE_PATH server.mjs
-Restart=on-failure
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-## Enable nodejs app service
-systemctl daemon-reload
-systemctl enable node-app
-systemctl start node-app
+## Configure PM2 to start on boot
+env PATH=$PATH:/usr/local/bin pm2 startup systemd -u root --hp /root
+pm2 save
