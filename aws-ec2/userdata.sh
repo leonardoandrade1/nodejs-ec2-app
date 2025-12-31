@@ -61,7 +61,7 @@ systemctl enable nginx
 systemctl start nginx
 
 ## Start the NodeJS app with PM2
-pm2 start /var/www/app/server.mjs --name "nodejs-ec2-app"
+pm2 start /var/www/app/server.mjs --name "nodejs-ec2-app" -i 2
 
 ## Configure PM2 to start on boot
 env PATH=$PATH:/usr/local/bin pm2 startup systemd -u root --hp /root
