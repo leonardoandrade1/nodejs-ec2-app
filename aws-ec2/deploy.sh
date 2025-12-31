@@ -11,7 +11,7 @@ sudo -u deploy-user npm --prefix $APP_PATH install --production
 
 sudo -u deploy-user "PM2_HOME=/opt/.pm2 pm2 reload nodejs-ec2-app"
 
-sudo systemctl restart nginx
+sudo nginx -t && sudo systemctl restart nginx
 
 echo "Deploy success with PM2! Date: $(date)"
 
