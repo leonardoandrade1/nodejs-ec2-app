@@ -1,14 +1,17 @@
 #!/bin/bash
 
-cd /var/www/app
+APP_PATH="/var/www/app"
+export PM2_HOME="/opt/.pm2"
 
-git pull origin main
+echo "Starting deployment as $(whoami)... Date: $(date)" >> /var/log/deploy.log
 
-npm install --production
+sudo -u deploy-user git -C $APP_PATH pull origin main
 
-sudo su -c "PM2_HOME=/opt/.pm2 pm2 reload nodejs-ec2-app"
+sudo -u deploy-user npm --prefix $APP_PATH install --production
 
-systemctl restart nginx
+sudo -u deploy-user "PM2_HOME=/opt/.pm2 pm2 reload nodejs-ec2-app"
+
+sudo systemctl restart nginx
 
 echo "Deploy success with PM2! Date: $(date)"
 
