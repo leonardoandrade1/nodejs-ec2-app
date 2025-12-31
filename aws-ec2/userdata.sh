@@ -53,10 +53,6 @@ cd app
 npm install
 npm run build --if-present
 
-## Set NGINX permissions
-chown -R deploy-user:nginx /var/www/app
-chmod -R 755 /var/www/app
-
 ## Start the NodeJS app
 sudo -u deploy-user PM2_HOME=/opt/.pm2 pm2 start /var/www/app/server.mjs --name "nodejs-ec2-app" -i 2
 sudo -u deploy-user PM2_HOME=/opt/.pm2 pm2 save
@@ -64,10 +60,13 @@ sudo -u deploy-user PM2_HOME=/opt/.pm2 pm2 save
 ## Configure PM2 to start on boot
 sudo su -c "PM2_HOME=/opt/.pm2 pm2 startup systemd -u deploy-user --hp /home/deploy-user"
 
+## Stop NGINX to apply new configuration
+systemctl stop nginx
+
 ## Remove all default NGINX files
 rm -f /etc/nginx/nginx.conf
-rm -f /etc/nginx/conf.d/*.conf
-rm -f /etc/nginx/default.d/
+rm -rf /etc/nginx/conf.d/*
+rm -rf /etc/nginx/default.d/*
 
 ## Configure a simlink for NGINX conf
 ln -sf /var/www/app/nginx/nginx.conf /etc/nginx/nginx.conf
@@ -75,11 +74,9 @@ ln -sf /var/www/app/nginx/nginx.conf /etc/nginx/nginx.conf
 ## Set proper permissions for NGINX logs
 touch /var/log/nginx/node_app_error.log /var/log/nginx/node_app_access.log
 chown nginx:nginx /var/log/nginx/node_app_*.log
-chown -R root:nginx /var/www/app
-chmod -R 755 /var/www/app
 ## Allow NGINX make network connections for SELinux
 setsebool -P httpd_can_network_connect 1
 
 ## Restart NGINX to apply changes
+nginx -t && systemctl start nginx
 systemctl enable nginx
-systemctl start nginx
