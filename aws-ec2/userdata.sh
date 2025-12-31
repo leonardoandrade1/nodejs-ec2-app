@@ -64,25 +64,31 @@ sudo -u deploy-user PM2_HOME=/opt/.pm2 pm2 save
 ## Configure PM2 to start on boot
 sudo su -c "PM2_HOME=/opt/.pm2 pm2 startup systemd -u deploy-user --hp /home/deploy-user"
 
-## Remove default NGINX config to avoid conflicts
+## Remove all default NGINX files
+# rm -f /etc/nginx/nginx.conf
 rm -f /etc/nginx/conf.d/*.conf
+# rm -f /etc/nginx/default.d/
 
-## Copy custom nginx server config from the repository
-cp /var/www/app/nginx/nginx.conf /etc/nginx/conf.d/node_app.conf
+## Configure a simlink for NGINX conf
+ln -sf /var/www/app/nginx/nginx.conf /etc/nginx/nginx.conf
 
 ## Set proper permissions for NGINX logs
 touch /var/log/nginx/node_app_error.log /var/log/nginx/node_app_access.log
 chown nginx:nginx /var/log/nginx/node_app_*.log
-
+chown -R root:nginx /var/www/app
+chmod -R 755 /var/www/app
 ## Allow NGINX make network connections for SELinux
 setsebool -P httpd_can_network_connect 1
 
-## Apply custom NGINX config
+## Configure NGINX
 if [ -f "/var/www/app/nginx/nginx.conf" ]; then
     ## Remove the default config to avoid conflicts
     rm -f /etc/nginx/conf.d/*.conf
     # Copy custom NGINX config from the repository
     cp /var/www/app/nginx/nginx.conf /etc/nginx/conf.d/node_app.conf
+
+    touch /var/log/nginx/node_app_error.log
+    chown nginx:nginx /var/log/nginx/node_app_error.log
 fi
 
 ## Restart NGINX to apply changes
