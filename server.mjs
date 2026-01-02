@@ -4,6 +4,12 @@ const app = express();
 
 app.use(express.json());
 
+router.get('/health', (req, res) => {
+  res.send({
+    status: 'ok',
+  });
+});
+
 const router = express.Router();
 
 router.get('/', (req, res) => {
